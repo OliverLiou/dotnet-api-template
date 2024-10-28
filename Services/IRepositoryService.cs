@@ -2,8 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
+using Quickly_PriceQuotationApi;
 using TemplateApi.Models;
 
 namespace TemplateApi.Services
@@ -24,6 +26,12 @@ namespace TemplateApi.Services
         /// 取得整個Table資料
         /// </summary>
         Task<List<T>> GetAllDataAsync<T>() where T : class;
+
+        /// <summary>
+        /// 找出範圍內的資料
+        /// </summary>
+        Task<Tuple<List<T>, int>> FindDataAsync<T>(Expression<Func<T, bool>>? predicate, int currentPage, int pageSize, string? querySearch) where T : class;
+        
     }
 
     public class RepositoryService(TemplateContext context) : IRepositoryService
@@ -75,6 +83,30 @@ namespace TemplateApi.Services
                 var items = await _context.Set<T>().ToListAsync();
 
                 return items;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        public async Task<Tuple<List<T>, int>> FindDataAsync<T>(Expression<Func<T, bool>>? predicate, int currentPage, int pageSize, string? querySearch) where T : class
+        {
+            try
+            {
+                var items = _context.Set<T>().AsQueryable();
+
+                if (predicate != null)
+                    items = items.Where(predicate);
+
+                if (!string.IsNullOrEmpty(querySearch))
+                    items = PublicMethod.setWhereStr(querySearch, typeof(T).GetProperties(), items);
+
+                var total = await items.CountAsync();
+
+                items = items.Skip((currentPage - 1) * pageSize).Take(pageSize);
+
+                return Tuple.Create(await items.ToListAsync(), total);
             }
             catch (Exception)
             {
