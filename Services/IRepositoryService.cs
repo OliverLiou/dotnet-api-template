@@ -4,8 +4,10 @@ using System.Globalization;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.EntityFrameworkCore;
 using Quickly_PriceQuotationApi;
+using TemplateApi.Interface;
 using TemplateApi.Models;
 
 namespace TemplateApi.Services
@@ -20,7 +22,14 @@ namespace TemplateApi.Services
         /// <summary>
         /// 新增或更新單筆資料
         /// </summary>
-        Task SaveDataAsync<T>(T entity) where T : class;
+        Task SaveSingleDataAsync<T, T2>(T entity, string editorName) 
+            where T : class
+            where T2 : class, ILogInterface, new();
+
+        /// <summary>
+        /// 新增或更新多筆資料
+        /// </summary>
+        Task SaveMutipleDataAsync<T>(List<T> entitys) where T : class;
 
         /// <summary>
         /// 取得整個Table資料
@@ -28,15 +37,24 @@ namespace TemplateApi.Services
         Task<List<T>> GetAllDataAsync<T>() where T : class;
 
         /// <summary>
-        /// 找出範圍內的資料
+        /// 找出範圍內的資料, 可下條件式、排序
         /// </summary>
-        Task<Tuple<List<T>, int>> FindDataAsync<T>(Expression<Func<T, bool>>? predicate, int currentPage, int pageSize, string? querySearch) where T : class;
-        
+        Task<Tuple<List<T>, int>> FindDataAsync<T>(int currentPage, int pageSize, string? querySearch,
+                                                   Expression<Func<T, bool>>? predicate,
+                                                   List<(string, bool)> sortColumns) where T : class;
+
+
+        // void CreateLog<T>(DateTime excuteTime, T entity, string method, string editorName);
     }
 
-    public class RepositoryService(TemplateContext context) : IRepositoryService
+    public class RepositoryService(TemplateContext context, IConfiguration configuration, IMapper mapper) : IRepositoryService
     {
         private readonly TemplateContext _context = context;
+        // private readonly IConfiguration _configuration = configuration;
+        private readonly IMapper _mapper = mapper;
+        private readonly string _create = configuration.GetSection("MethodName")["Create"]!;
+        private readonly string _update = configuration.GetSection("MethodName")["Update"]!;
+        private readonly string _remove = configuration.GetSection("MethodName")["Remove"]!;
 
         public async Task<T?> GetDataWithIdAsync<T>(object[] id) where T : class
         {
@@ -51,7 +69,9 @@ namespace TemplateApi.Services
             }
         }
 
-        public async Task SaveDataAsync<T>(T entity) where T : class
+        public async Task SaveSingleDataAsync<T, T2>(T entity, string editorName)
+            where T : class
+            where T2 : class, ILogInterface, new()
         {
             try
             {
@@ -59,13 +79,23 @@ namespace TemplateApi.Services
 
                 var id = GetPrimaryKeyValues(entity);
                 var oldEntity = await GetDataWithIdAsync<T>(id!);
+                var methodName = _create;
+
                 if (oldEntity == null)
                     await _context.Set<T>().AddAsync(entity);    
                 else
                 {
+                    methodName = _update;
                     _context.Entry(oldEntity).State = EntityState.Modified;
                     _context.Entry(oldEntity).CurrentValues.SetValues(entity);
                 }
+
+                var entityLog = _mapper.Map<T2>(entity);
+                entityLog.ExcuteTime = DateTime.Now;
+                entityLog.Method = methodName;
+                entityLog.EditorName = editorName;
+
+                await _context.Set<T2>().AddAsync(entityLog);
 
                 await _context.SaveChangesAsync();
                 await _transaction.CommitAsync();
@@ -76,6 +106,34 @@ namespace TemplateApi.Services
             }
         }
     
+        public async Task SaveMutipleDataAsync<T>(List<T> entitys) where T : class
+        {
+            try
+            {
+                var _transaction = await _context.Database.BeginTransactionAsync();
+
+                foreach(var entity in entitys)
+                {
+                    var id = GetPrimaryKeyValues(entity);
+                    var oldEntity = GetDataWithIdAsync<T>(id!);
+                    if (oldEntity == null)
+                        await _context.Set<T>().AddAsync(entity);
+                    else
+                    {
+                        _context.Entry(oldEntity).State = EntityState.Modified;
+                        _context.Entry(oldEntity).CurrentValues.SetValues(entity);
+                    }
+                }
+
+                await _context.SaveChangesAsync();
+                await _transaction.CommitAsync();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
         public async Task<List<T>> GetAllDataAsync<T>() where T : class
         {
             try
@@ -90,12 +148,15 @@ namespace TemplateApi.Services
             }
         }
 
-        public async Task<Tuple<List<T>, int>> FindDataAsync<T>(Expression<Func<T, bool>>? predicate, int currentPage, int pageSize, string? querySearch) where T : class
+        public async Task<Tuple<List<T>, int>> FindDataAsync<T>(int currentPage, int pageSize, string? querySearch, 
+                                                                Expression<Func<T, bool>>? predicate,
+                                                                List<(string, bool)>? sortColumns) where T : class
         {
             try
             {
                 var items = _context.Set<T>().AsQueryable();
 
+                //篩選條件
                 if (predicate != null)
                     items = items.Where(predicate);
 
@@ -103,6 +164,23 @@ namespace TemplateApi.Services
                     items = PublicMethod.setWhereStr(querySearch, typeof(T).GetProperties(), items);
 
                 var total = await items.CountAsync();
+
+                //排序
+                if (sortColumns != null)
+                {
+                    foreach(var sortColumn in sortColumns)
+                    {
+                        var (propertyName, isAscending) = sortColumn;
+                        var parameter = Expression.Parameter(typeof(T), "x");
+                        var property = Expression.Property(parameter, propertyName);
+                        var lambda = Expression.Lambda(property, parameter);
+                        var methodName = isAscending ? "OrderBy" : "OrderByDescending";
+
+                        var genericMethod = typeof(Queryable).GetMethods().First(m => m.Name == methodName && m.GetParameters().Length == 2)
+                                                             .MakeGenericMethod(typeof(T), property.Type);
+                        items = (IQueryable<T>)genericMethod.Invoke(null, [items, lambda])!;
+                    }
+                }
 
                 items = items.Skip((currentPage - 1) * pageSize).Take(pageSize);
 
@@ -127,5 +205,28 @@ namespace TemplateApi.Services
                 throw;
             }
         }
+    
+        // public void CreateLog<T>(T entity, DateTime excuteTime, string method, string editorName)
+        // {
+        //     try
+        //     {
+        //         ILogInterface obj = new T()
+
+        //         var propertyInfos = typeof(ILogInterface).GetProperties();
+                
+        //         foreach(var propertyInfo in propertyInfos)
+        //         {
+        //             var propertyName = propertyInfo.Name;
+        //             if (propertyInfo.CanWrite)
+        //             {
+        //                 propertyInfo.SetValue
+        //             }
+        //         }
+        //     }
+        //     catch (Exception)
+        //     {
+        //         throw;
+        //     }
+        // }
     }
 }

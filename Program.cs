@@ -19,6 +19,8 @@ builder.Services.AddSwaggerGen();
 // builder.Services.AddScoped(typeof(IRepositoryService<>), typeof(RepositoryService<>));
 builder.Services.AddScoped<IRepositoryService, RepositoryService>();
 
+builder.Services.AddAutoMapper(typeof(Program).Assembly);
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

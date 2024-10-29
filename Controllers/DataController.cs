@@ -38,7 +38,7 @@ namespace TemplateApi.Controllers
         {
             try
             {
-                await _repositoryService.SaveDataAsync(table1);
+                await _repositoryService.SaveSingleDataAsync<Table1, Table1Log>(table1, "");
                 return Ok();
             }
             catch (Exception ex)
@@ -69,8 +69,9 @@ namespace TemplateApi.Controllers
             try
             {
                 // Expression<Func<Table1, bool>> filter = t => t.Column1 == "xxxw666";
+                var sortColumns = new List<(string PropertyName, bool IsAscending)> { ("Table1Id", true) };
 
-                var tuple = await _repositoryService.FindDataAsync<Table1>(null, currentPage, pageSize, querySearch);
+                var tuple = await _repositoryService.FindDataAsync<Table1>(currentPage, pageSize, querySearch, null, sortColumns);
 
                 return Ok(tuple);
             }
