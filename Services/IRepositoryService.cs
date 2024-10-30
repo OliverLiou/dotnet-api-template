@@ -117,9 +117,12 @@ namespace TemplateApi.Services
                 foreach(var entity in entitys)
                 {
                     var id = GetPrimaryKeyValues(entity);
-                    var oldEntity = GetDataWithIdAsync<T>(id!);
+                    var oldEntity = await GetDataWithIdAsync<T>(id!);
                     if (oldEntity == null)
+                    {
                         await _context.Set<T>().AddAsync(entity);
+                        log.Method = _create;
+                    }
                     else
                     {
                         _context.Entry(oldEntity).State = EntityState.Modified;

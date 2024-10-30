@@ -63,7 +63,6 @@ namespace TemplateApi.Controllers
             }
         }
 
-
         [HttpGet("GetTable1s")]
         public async Task<IActionResult> GetTable1s()
         {
