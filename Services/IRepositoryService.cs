@@ -24,12 +24,14 @@ namespace TemplateApi.Services
         /// </summary>
         Task SaveSingleDataAsync<T, T2>(T entity, string editorName) 
             where T : class
-            where T2 : class, ILogInterface, new();
+            where T2 : class;
 
         /// <summary>
         /// 新增或更新多筆資料
         /// </summary>
-        Task SaveMutipleDataAsync<T>(List<T> entitys) where T : class;
+        Task SaveMutipleDataAsync<T, T2>(List<T> entitys, string editorName) 
+            where T : class
+            where T2 : class;
 
         /// <summary>
         /// 取得整個Table資料
@@ -43,8 +45,6 @@ namespace TemplateApi.Services
                                                    Expression<Func<T, bool>>? predicate,
                                                    List<(string, bool)> sortColumns) where T : class;
 
-
-        // void CreateLog<T>(DateTime excuteTime, T entity, string method, string editorName);
     }
 
     public class RepositoryService(TemplateContext context, IConfiguration configuration, IMapper mapper) : IRepositoryService
@@ -71,7 +71,7 @@ namespace TemplateApi.Services
 
         public async Task SaveSingleDataAsync<T, T2>(T entity, string editorName)
             where T : class
-            where T2 : class, ILogInterface, new()
+            where T2 : class
         {
             try
             {
@@ -90,11 +90,11 @@ namespace TemplateApi.Services
                     _context.Entry(oldEntity).CurrentValues.SetValues(entity);
                 }
 
-                var entityLog = _mapper.Map<T2>(entity);
-                entityLog.ExcuteTime = DateTime.Now;
-                entityLog.Method = methodName;
-                entityLog.EditorName = editorName;
+                await _context.SaveChangesAsync(); //如果為insert資料, 先存檔才可以取得Id
 
+                var log = new Log() { Method = methodName, EditorName = editorName, ExcuteTime = DateTime.Now };
+
+                var entityLog = CreateLog<T, T2>(entity, log);
                 await _context.Set<T2>().AddAsync(entityLog);
 
                 await _context.SaveChangesAsync();
@@ -106,12 +106,14 @@ namespace TemplateApi.Services
             }
         }
     
-        public async Task SaveMutipleDataAsync<T>(List<T> entitys) where T : class
+        public async Task SaveMutipleDataAsync<T, T2>(List<T> entitys, string editorName) where T : class where T2 : class
         {
             try
             {
                 var _transaction = await _context.Database.BeginTransactionAsync();
-
+                
+                var log = new Log() { EditorName = editorName, Method = _create, ExcuteTime = DateTime.Now };
+                
                 foreach(var entity in entitys)
                 {
                     var id = GetPrimaryKeyValues(entity);
@@ -122,7 +124,14 @@ namespace TemplateApi.Services
                     {
                         _context.Entry(oldEntity).State = EntityState.Modified;
                         _context.Entry(oldEntity).CurrentValues.SetValues(entity);
+                        log.Method = _update;
                     }
+                
+                    await _context.SaveChangesAsync();
+                    
+                    //建立Log
+                    var entityLog = CreateLog<T, T2>(entity, log);
+                    await _context.Set<T2>().AddAsync(entityLog);
                 }
 
                 await _context.SaveChangesAsync();
@@ -205,28 +214,34 @@ namespace TemplateApi.Services
                 throw;
             }
         }
-    
-        // public void CreateLog<T>(T entity, DateTime excuteTime, string method, string editorName)
-        // {
-        //     try
-        //     {
-        //         ILogInterface obj = new T()
 
-        //         var propertyInfos = typeof(ILogInterface).GetProperties();
-                
-        //         foreach(var propertyInfo in propertyInfos)
-        //         {
-        //             var propertyName = propertyInfo.Name;
-        //             if (propertyInfo.CanWrite)
-        //             {
-        //                 propertyInfo.SetValue
-        //             }
-        //         }
-        //     }
-        //     catch (Exception)
-        //     {
-        //         throw;
-        //     }
-        // }
+        public T2 CreateLog<T, T2>(T source, Log log) 
+            where T : class
+            where T2 : class 
+        {
+            try
+            {
+                var entityLog = _mapper.Map<T2>(source);
+                var entityLogPropertys = typeof(T2).GetProperties();
+
+                var logPropertys = log.GetType().GetProperties();
+
+                foreach(var logProperty in logPropertys)
+                {
+                    var name = logProperty.Name;
+                    var entityLogProperty = entityLogPropertys.First(e => e.Name == name);
+                    if (entityLogProperty != null && entityLogProperty.CanWrite)
+                    {
+                        entityLogProperty.SetValue(entityLog, logProperty.GetValue(log));
+                    }   
+                }
+
+                return entityLog;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
     }
 }

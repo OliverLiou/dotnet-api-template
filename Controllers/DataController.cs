@@ -48,6 +48,22 @@ namespace TemplateApi.Controllers
             }
         }
 
+        [HttpPost("Table1MutipleSave")]
+        public async Task<IActionResult> Table1MutipleSave(List<Table1> table1s)
+        {
+            try
+            {
+                await _repositoryService.SaveMutipleDataAsync<Table1, Table1Log>(table1s, "");
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("Error", ex.Message);
+                return BadRequest(ModelState);
+            }
+        }
+
+
         [HttpGet("GetTable1s")]
         public async Task<IActionResult> GetTable1s()
         {
