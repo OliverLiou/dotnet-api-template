@@ -1,13 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using TemplateApi.Models;
 using TemplateApi.Services;
-using System.Linq.Expressions;
 
 namespace TemplateApi.Controllers
 {
@@ -54,6 +49,22 @@ namespace TemplateApi.Controllers
             try
             {
                 await _repositoryService.SaveMutipleDataAsync<Table1, Table1Log>(table1s, "");
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("Error", ex.Message);
+                return BadRequest(ModelState);
+            }
+        }
+
+        [HttpPost("RemoveTable1Data")]
+        public async Task<IActionResult> RemoveTable1Data(int table1Id)
+        {
+            try
+            {
+                await _repositoryService.DeleteSigleDataAsync<Table1, Table1Log>([table1Id], "");
+
                 return Ok();
             }
             catch (Exception ex)

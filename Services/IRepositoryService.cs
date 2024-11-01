@@ -34,6 +34,13 @@ namespace TemplateApi.Services
             where T2 : class;
 
         /// <summary>
+        /// 刪除單筆資料
+        /// </summary>
+        Task DeleteSigleDataAsync<T, T2>(object [] id, string editorName)
+            where T : class
+            where T2 : class;
+
+        /// <summary>
         /// 取得整個Table資料
         /// </summary>
         Task<List<T>> GetAllDataAsync<T>() where T : class;
@@ -45,6 +52,7 @@ namespace TemplateApi.Services
                                                    Expression<Func<T, bool>>? predicate,
                                                    List<(string, bool)> sortColumns) where T : class;
 
+    
     }
 
     public class RepositoryService(TemplateContext context, IConfiguration configuration, IMapper mapper) : IRepositoryService
@@ -54,7 +62,7 @@ namespace TemplateApi.Services
         private readonly IMapper _mapper = mapper;
         private readonly string _create = configuration.GetSection("MethodName")["Create"]!;
         private readonly string _update = configuration.GetSection("MethodName")["Update"]!;
-        private readonly string _remove = configuration.GetSection("MethodName")["Remove"]!;
+        private readonly string _delete = configuration.GetSection("MethodName")["Delete"]!;
 
         public async Task<T?> GetDataWithIdAsync<T>(object[] id) where T : class
         {
@@ -94,8 +102,7 @@ namespace TemplateApi.Services
 
                 var log = new Log() { Method = methodName, EditorName = editorName, ExcuteTime = DateTime.Now };
 
-                var entityLog = CreateLog<T, T2>(entity, log);
-                await _context.Set<T2>().AddAsync(entityLog);
+                await ContextCreateLog<T, T2>(entity, log);
 
                 await _context.SaveChangesAsync();
                 await _transaction.CommitAsync();
@@ -112,7 +119,7 @@ namespace TemplateApi.Services
             {
                 var _transaction = await _context.Database.BeginTransactionAsync();
                 
-                var log = new Log() { EditorName = editorName, Method = _create, ExcuteTime = DateTime.Now };
+                var log = new Log() { EditorName = editorName, Method = "", ExcuteTime = DateTime.Now };
                 
                 foreach(var entity in entitys)
                 {
@@ -133,9 +140,36 @@ namespace TemplateApi.Services
                     await _context.SaveChangesAsync();
                     
                     //建立Log
-                    var entityLog = CreateLog<T, T2>(entity, log);
-                    await _context.Set<T2>().AddAsync(entityLog);
+                    await ContextCreateLog<T, T2>(entity, log);
                 }
+
+                await _context.SaveChangesAsync();
+                await _transaction.CommitAsync();
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+        public async Task DeleteSigleDataAsync<T, T2>(object [] id, string editorName) 
+            where T : class
+            where T2 : class
+        {
+            try
+            {
+                var _transaction = await _context.Database.BeginTransactionAsync();
+                
+                var entity = await GetDataWithIdAsync<T>(id);
+
+                if (entity == null)
+                    throw new Exception(string.Format("{0}中找不到Id為{1}的資料", typeof(T).Name, string.Join(",", id.Select(s => s))));
+
+                _context.Entry(entity).State = EntityState.Deleted;
+
+                var log = new Log() { EditorName = editorName, ExcuteTime = DateTime.Now, Method = _delete };
+
+                await ContextCreateLog<T, T2>(entity, log);
 
                 await _context.SaveChangesAsync();
                 await _transaction.CommitAsync();
@@ -218,7 +252,7 @@ namespace TemplateApi.Services
             }
         }
 
-        public T2 CreateLog<T, T2>(T source, Log log) 
+        public async Task ContextCreateLog<T, T2>(T source, Log log) 
             where T : class
             where T2 : class 
         {
@@ -239,7 +273,7 @@ namespace TemplateApi.Services
                     }   
                 }
 
-                return entityLog;
+                await _context.Set<T2>().AddAsync(entityLog);
             }
             catch (Exception)
             {
