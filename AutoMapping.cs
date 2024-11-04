@@ -14,6 +14,7 @@ namespace TemplateApi
 
             #region  --ModelLog--
             CreateMap<Table1, Table1Log>().ReverseMap();
+            CreateMap<User, UserLog>().ReverseMap();
             #endregion
         }
     }

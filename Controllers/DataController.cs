@@ -1,23 +1,25 @@
 using System;
 using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TemplateApi.Models;
 using TemplateApi.Services;
 
 namespace TemplateApi.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class DataController(IRepositoryService repositoryService) : ControllerBase
     {
         private readonly IRepositoryService _repositoryService = repositoryService;
 
-        [HttpGet("GetData/{objectId}")]
-        public async Task<IActionResult> GetData(int objectId)
+        [HttpGet("GetTable1/{table1Id}")]
+        public async Task<IActionResult> GetTable1(int table1Id)
         {
             try
             {
-                var result = await _repositoryService.GetDataWithIdAsync<Table1>([objectId]);
+                var result = await _repositoryService.GetDataWithIdAsync<Table1>([table1Id]);
 
                 return Ok(result);
             }
