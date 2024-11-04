@@ -66,9 +66,10 @@ namespace Quickly_PriceQuotationApi.Controllers
                     }
                     vToken.AccessToken = await _jwt.GenerateTokenAsync(userName, 180);
                     vToken.RefreshToken = await _jwt.GenerateTokenAsync(userName, 600);
+                    return Ok(vToken);
                 }
                 
-                return Ok(vToken);
+                return BadRequest(ModelState);
             }
             catch (Exception ex)
             {
