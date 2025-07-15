@@ -11,8 +11,9 @@ using TemplateApi.Models;
 using TemplateApi.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using System.DirectoryServices.AccountManagement;
+using Swashbuckle.AspNetCore.Annotations;
 
-namespace Quickly_PriceQuotationApi.Controllers
+namespace TemplateApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
@@ -25,6 +26,7 @@ namespace Quickly_PriceQuotationApi.Controllers
         private IPasswordHasher<User> _passwordHasher = passwordHasher;
 
         [HttpPost("LogIn")]
+        [SwaggerOperation(Summary = "使用者登入", Description = "此 API 用於使用者登入並回傳存取權杖及刷新權杖")]
         public async Task<IActionResult> LogIn(VUser vUser)
         {
             try

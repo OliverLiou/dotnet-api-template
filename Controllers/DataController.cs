@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TemplateApi.Models;
 using TemplateApi.Services;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace TemplateApi.Controllers
 {
@@ -15,6 +16,7 @@ namespace TemplateApi.Controllers
         private readonly IRepositoryService<Table1, Table1Log> _repositoryService = repositoryService;
 
         [HttpGet("GetTable1/{table1Id}")]
+        [SwaggerOperation(Summary = "取得指定的 Table1 資料", Description = "取得指定的 Table1 資料")]
         public async Task<IActionResult> GetTable1(int table1Id)
         {
             try
@@ -31,6 +33,7 @@ namespace TemplateApi.Controllers
         }
 
         [HttpPost("Table1Save")]
+        [SwaggerOperation(Summary = "儲存單筆 Table1 資料", Description = "儲存單筆 Table1 資料")]
         public async Task<IActionResult> Table1Save(Table1 table1)
         {
             try
@@ -46,6 +49,7 @@ namespace TemplateApi.Controllers
         }
 
         [HttpPost("Table1MutipleSave")]
+        [SwaggerOperation(Summary = "儲存多筆 Table1 資料", Description = "儲存多筆 Table1 資料")]
         public async Task<IActionResult> Table1MutipleSave(List<Table1> table1s)
         {
             try
@@ -61,6 +65,7 @@ namespace TemplateApi.Controllers
         }
 
         [HttpPost("RemoveTable1Data")]
+        [SwaggerOperation(Summary = "刪除指定的 Table1 資料", Description = "刪除指定的 Table1 資料")]
         public async Task<IActionResult> RemoveTable1Data(int table1Id)
         {
             try
@@ -77,6 +82,7 @@ namespace TemplateApi.Controllers
         }
 
         [HttpGet("GetTable1s")]
+        [SwaggerOperation(Summary = "取得所有 Table1 資料", Description = "取得所有 Table1 資料")]
         public async Task<IActionResult> GetTable1s()
         {
             try
@@ -92,6 +98,7 @@ namespace TemplateApi.Controllers
         }
 
         [HttpGet("FindTable1/{currentPage}/{pageSize}")]
+        [SwaggerOperation(Summary = "分頁查詢 Table1 資料", Description = "分頁查詢 Table1 資料")]
         public async Task<IActionResult> FindTable1(int currentPage, int pageSize, string? querySearch)
         {
             try

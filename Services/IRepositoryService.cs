@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Quickly_PriceQuotationApi;
+using TemplateApi;
 using TemplateApi.Interface;
 using TemplateApi.Models;
 
