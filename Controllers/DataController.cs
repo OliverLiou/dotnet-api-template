@@ -10,16 +10,16 @@ namespace TemplateApi.Controllers
     [Authorize]
     [ApiController]
     [Route("api/[controller]")]
-    public class DataController(IRepositoryService repositoryService) : ControllerBase
+    public class DataController(IRepositoryService<Table1, Table1Log> repositoryService) : ControllerBase
     {
-        private readonly IRepositoryService _repositoryService = repositoryService;
+        private readonly IRepositoryService<Table1, Table1Log> _repositoryService = repositoryService;
 
         [HttpGet("GetTable1/{table1Id}")]
         public async Task<IActionResult> GetTable1(int table1Id)
         {
             try
             {
-                var result = await _repositoryService.GetDataWithIdAsync<Table1>([table1Id]);
+                var result = await _repositoryService.GetDataWithIdAsync([table1Id]);
 
                 return Ok(result);
             }
@@ -35,7 +35,7 @@ namespace TemplateApi.Controllers
         {
             try
             {
-                await _repositoryService.SaveSingleDataAsync<Table1, Table1Log>(table1, "");
+                await _repositoryService.SaveSingleDataAsync(table1, "");
                 return Ok();
             }
             catch (Exception ex)
@@ -50,7 +50,7 @@ namespace TemplateApi.Controllers
         {
             try
             {
-                await _repositoryService.SaveMutipleDataAsync<Table1, Table1Log>(table1s, "");
+                await _repositoryService.SaveMutipleDataAsync(table1s, "");
                 return Ok();
             }
             catch (Exception ex)
@@ -65,7 +65,7 @@ namespace TemplateApi.Controllers
         {
             try
             {
-                await _repositoryService.DeleteSigleDataAsync<Table1, Table1Log>([table1Id], "");
+                await _repositoryService.DeleteSigleDataAsync([table1Id], "");
 
                 return Ok();
             }
@@ -81,7 +81,7 @@ namespace TemplateApi.Controllers
         {
             try
             {
-                var allData = await _repositoryService.GetAllDataAsync<Table1>();
+                var allData = await _repositoryService.GetAllDataAsync();
                 return Ok(allData);
             }
             catch (Exception ex)
@@ -99,7 +99,7 @@ namespace TemplateApi.Controllers
                 // Expression<Func<Table1, bool>> filter = t => t.Column1 == "xxxw666";
                 var sortColumns = new List<(string PropertyName, bool IsAscending)> { ("Table1Id", true) };
 
-                var tuple = await _repositoryService.FindDataAsync<Table1>(currentPage, pageSize, querySearch, null, sortColumns);
+                var tuple = await _repositoryService.FindDataAsync(currentPage, pageSize, querySearch, null, sortColumns);
 
                 return Ok(tuple);
             }

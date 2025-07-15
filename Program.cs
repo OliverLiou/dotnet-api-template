@@ -48,8 +48,12 @@ builder.Services.AddSwaggerGen(c =>
         });
 });
 
-// builder.Services.AddScoped(typeof(IRepositoryService<>), typeof(RepositoryService<>));
-builder.Services.AddScoped<IRepositoryService, RepositoryService>();
+// 註冊泛型 Repository 服務
+builder.Services.AddScoped(typeof(IRepositoryService<,>), typeof(RepositoryService<,>));
+
+// 註冊具體實體的 Repository 服務
+builder.Services.AddScoped<IRepositoryService<User, UserLog>, RepositoryService<User, UserLog>>();
+builder.Services.AddScoped<IRepositoryService<Table1, Table1Log>, RepositoryService<Table1, Table1Log>>();
 
 //JWT驗證加密
 builder.Services.AddScoped<JwtHelpers>();
@@ -92,7 +96,7 @@ builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// // Configure the HTTP request pipeline.
 // if (app.Environment.IsDevelopment())
 // {
 

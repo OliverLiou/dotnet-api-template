@@ -12,59 +12,58 @@ using TemplateApi.Models;
 
 namespace TemplateApi.Services
 {
-    public interface IRepositoryService
+    /// <summary>
+    /// 泛型 Repository 介面，約束提升到介面級別
+    /// </summary>
+    /// <typeparam name="T">實體類型</typeparam>
+    /// <typeparam name="TLog">日誌實體類型</typeparam>
+    public interface IRepositoryService<T, TLog> where T : class where TLog : class
     {
         /// <summary>
         /// 取得單筆資料
         /// </summary>
-        Task<T?> GetDataWithIdAsync<T>(object[] id) where T : class;
+        Task<T?> GetDataWithIdAsync(object[] id);
 
         /// <summary>
         /// 新增或更新單筆資料
         /// </summary>
-        Task SaveSingleDataAsync<T, T2>(T entity, string editorName) 
-            where T : class
-            where T2 : class;
+        Task SaveSingleDataAsync(T entity, string editorName);
 
         /// <summary>
         /// 新增或更新多筆資料
         /// </summary>
-        Task SaveMutipleDataAsync<T, T2>(List<T> entitys, string editorName) 
-            where T : class
-            where T2 : class;
+        Task SaveMutipleDataAsync(List<T> entitys, string editorName);
 
         /// <summary>
         /// 刪除單筆資料
         /// </summary>
-        Task DeleteSigleDataAsync<T, T2>(object [] id, string editorName)
-            where T : class
-            where T2 : class;
+        Task DeleteSigleDataAsync(object[] id, string editorName);
 
         /// <summary>
         /// 取得整個Table資料
         /// </summary>
-        Task<List<T>> GetAllDataAsync<T>() where T : class;
+        Task<List<T>> GetAllDataAsync();
 
         /// <summary>
         /// 找出範圍內的資料, 可下條件式、排序
         /// </summary>
-        Task<Tuple<List<T>, int>> FindDataAsync<T>(int currentPage, int pageSize, string? querySearch,
-                                                   Expression<Func<T, bool>>? predicate,
-                                                   List<(string, bool)> sortColumns) where T : class;
-
-    
+        Task<Tuple<List<T>, int>> FindDataAsync(int currentPage, int pageSize, string? querySearch,
+                                                Expression<Func<T, bool>>? predicate,
+                                                List<(string, bool)> sortColumns);
     }
 
-    public class RepositoryService(TemplateContext context, IConfiguration configuration, IMapper mapper) : IRepositoryService
+    /// <summary>
+    /// 泛型 Repository 實作
+    /// </summary>
+    public class RepositoryService<T, TLog>(TemplateContext context, IConfiguration configuration, IMapper mapper) : IRepositoryService<T, TLog> where T : class where TLog : class
     {
         private readonly TemplateContext _context = context;
-        // private readonly IConfiguration _configuration = configuration;
         private readonly IMapper _mapper = mapper;
         private readonly string _create = configuration.GetSection("MethodName")["Create"]!;
         private readonly string _update = configuration.GetSection("MethodName")["Update"]!;
         private readonly string _delete = configuration.GetSection("MethodName")["Delete"]!;
 
-        public async Task<T?> GetDataWithIdAsync<T>(object[] id) where T : class
+        public async Task<T?> GetDataWithIdAsync(object[] id)
         {
             try
             {
@@ -77,20 +76,18 @@ namespace TemplateApi.Services
             }
         }
 
-        public async Task SaveSingleDataAsync<T, T2>(T entity, string editorName)
-            where T : class
-            where T2 : class
+        public async Task SaveSingleDataAsync(T entity, string editorName)
         {
             try
             {
                 var _transaction = await _context.Database.BeginTransactionAsync();
 
                 var id = GetPrimaryKeyValues(entity);
-                var oldEntity = await GetDataWithIdAsync<T>(id!);
+                var oldEntity = await GetDataWithIdAsync(id!);
                 var methodName = _create;
 
                 if (oldEntity == null)
-                    await _context.Set<T>().AddAsync(entity);    
+                    await _context.Set<T>().AddAsync(entity);
                 else
                 {
                     methodName = _update;
@@ -98,11 +95,11 @@ namespace TemplateApi.Services
                     _context.Entry(oldEntity).CurrentValues.SetValues(entity);
                 }
 
-                await _context.SaveChangesAsync(); //如果為insert資料, 先存檔才可以取得Id
+                await _context.SaveChangesAsync();
 
                 var log = new Log() { Method = methodName, EditorName = editorName, ExcuteTime = DateTime.Now };
 
-                await ContextCreateLog<T, T2>(entity, log);
+                await ContextCreateLog(entity, log);
 
                 await _context.SaveChangesAsync();
                 await _transaction.CommitAsync();
@@ -112,19 +109,19 @@ namespace TemplateApi.Services
                 throw;
             }
         }
-    
-        public async Task SaveMutipleDataAsync<T, T2>(List<T> entitys, string editorName) where T : class where T2 : class
+
+        public async Task SaveMutipleDataAsync(List<T> entitys, string editorName)
         {
             try
             {
                 var _transaction = await _context.Database.BeginTransactionAsync();
-                
+
                 var log = new Log() { EditorName = editorName, Method = "", ExcuteTime = DateTime.Now };
-                
-                foreach(var entity in entitys)
+
+                foreach (var entity in entitys)
                 {
                     var id = GetPrimaryKeyValues(entity);
-                    var oldEntity = await GetDataWithIdAsync<T>(id!);
+                    var oldEntity = await GetDataWithIdAsync(id!);
                     if (oldEntity == null)
                     {
                         await _context.Set<T>().AddAsync(entity);
@@ -136,11 +133,10 @@ namespace TemplateApi.Services
                         _context.Entry(oldEntity).CurrentValues.SetValues(entity);
                         log.Method = _update;
                     }
-                
+
                     await _context.SaveChangesAsync();
-                    
-                    //建立Log
-                    await ContextCreateLog<T, T2>(entity, log);
+
+                    await ContextCreateLog(entity, log);
                 }
 
                 await _context.SaveChangesAsync();
@@ -152,15 +148,13 @@ namespace TemplateApi.Services
             }
         }
 
-        public async Task DeleteSigleDataAsync<T, T2>(object [] id, string editorName) 
-            where T : class
-            where T2 : class
+        public async Task DeleteSigleDataAsync(object[] id, string editorName)
         {
             try
             {
                 var _transaction = await _context.Database.BeginTransactionAsync();
-                
-                var entity = await GetDataWithIdAsync<T>(id);
+
+                var entity = await GetDataWithIdAsync(id);
 
                 if (entity == null)
                     throw new Exception(string.Format("{0}中找不到Id為{1}的資料", typeof(T).Name, string.Join(",", id.Select(s => s))));
@@ -169,7 +163,7 @@ namespace TemplateApi.Services
 
                 var log = new Log() { EditorName = editorName, ExcuteTime = DateTime.Now, Method = _delete };
 
-                await ContextCreateLog<T, T2>(entity, log);
+                await ContextCreateLog(entity, log);
 
                 await _context.SaveChangesAsync();
                 await _transaction.CommitAsync();
@@ -180,12 +174,11 @@ namespace TemplateApi.Services
             }
         }
 
-        public async Task<List<T>> GetAllDataAsync<T>() where T : class
+        public async Task<List<T>> GetAllDataAsync()
         {
             try
             {
                 var items = await _context.Set<T>().ToListAsync();
-
                 return items;
             }
             catch (Exception)
@@ -194,15 +187,14 @@ namespace TemplateApi.Services
             }
         }
 
-        public async Task<Tuple<List<T>, int>> FindDataAsync<T>(int currentPage, int pageSize, string? querySearch, 
-                                                                Expression<Func<T, bool>>? predicate,
-                                                                List<(string, bool)>? sortColumns) where T : class
+        public async Task<Tuple<List<T>, int>> FindDataAsync(int currentPage, int pageSize, string? querySearch,
+                                                            Expression<Func<T, bool>>? predicate,
+                                                            List<(string, bool)>? sortColumns)
         {
             try
             {
                 var items = _context.Set<T>().AsQueryable();
 
-                //篩選條件
                 if (predicate != null)
                     items = items.Where(predicate);
 
@@ -211,10 +203,9 @@ namespace TemplateApi.Services
 
                 var total = await items.CountAsync();
 
-                //排序
                 if (sortColumns != null)
                 {
-                    foreach(var sortColumn in sortColumns)
+                    foreach (var sortColumn in sortColumns)
                     {
                         var (propertyName, isAscending) = sortColumn;
                         var parameter = Expression.Parameter(typeof(T), "x");
@@ -238,7 +229,7 @@ namespace TemplateApi.Services
             }
         }
 
-        public object?[] GetPrimaryKeyValues<T>(T entity) where T : class
+        public object?[] GetPrimaryKeyValues(T entity)
         {
             try
             {
@@ -252,28 +243,26 @@ namespace TemplateApi.Services
             }
         }
 
-        public async Task ContextCreateLog<T, T2>(T source, Log log) 
-            where T : class
-            where T2 : class 
+        public async Task ContextCreateLog(T source, Log log)
         {
             try
             {
-                var entityLog = _mapper.Map<T2>(source);
-                var entityLogPropertys = typeof(T2).GetProperties();
+                var entityLog = _mapper.Map<TLog>(source);
+                var entityLogPropertys = typeof(TLog).GetProperties();
 
                 var logPropertys = log.GetType().GetProperties();
 
-                foreach(var logProperty in logPropertys)
+                foreach (var logProperty in logPropertys)
                 {
                     var name = logProperty.Name;
                     var entityLogProperty = entityLogPropertys.First(e => e.Name == name);
                     if (entityLogProperty != null && entityLogProperty.CanWrite)
                     {
                         entityLogProperty.SetValue(entityLog, logProperty.GetValue(log));
-                    }   
+                    }
                 }
 
-                await _context.Set<T2>().AddAsync(entityLog);
+                await _context.Set<TLog>().AddAsync(entityLog);
             }
             catch (Exception)
             {
