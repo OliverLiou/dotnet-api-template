@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace TemplateApi.Controllers;
+namespace DotNetApiTemplate.Controllers;
 
 [ApiController]
 [Route("[controller]")]

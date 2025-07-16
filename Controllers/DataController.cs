@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using TemplateApi.Models;
-using TemplateApi.Services;
+using  DotNetApiTemplate.Models;
+using  DotNetApiTemplate.Services;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace TemplateApi.Controllers
+namespace DotNetApiTemplate.Controllers
 {
     [Authorize]
     [ApiController]

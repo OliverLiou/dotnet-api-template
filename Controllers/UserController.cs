@@ -7,13 +7,13 @@ using Microsoft.AspNetCore.Mvc;
 using AutoMapper;
 using JwtAuthDemo.Helpers;
 using Microsoft.AspNetCore.Identity;
-using TemplateApi.Models;
-using TemplateApi.ViewModels;
+using  DotNetApiTemplate.Models;
+using  DotNetApiTemplate.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using System.DirectoryServices.AccountManagement;
 using Swashbuckle.AspNetCore.Annotations;
 
-namespace TemplateApi.Controllers
+namespace DotNetApiTemplate.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]

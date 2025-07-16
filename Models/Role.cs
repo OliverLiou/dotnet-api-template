@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 
-namespace TemplateApi.Models
+namespace DotNetApiTemplate.Models
 {
     public class Role :IdentityRole
     {

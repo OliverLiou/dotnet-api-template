@@ -105,4 +105,4 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 14. Types other than `feat` and `fix` MAY be used in your commit messages, e.g., *docs: update ref docs.*
 15. The units of information that make up Conventional Commits MUST NOT be treated as case sensitive by implementors, with the exception of BREAKING CHANGE which MUST be uppercase.
 16. BREAKING-CHANGE MUST be synonymous with BREAKING CHANGE, when used as a token in a footer.
-17. description的部分請用中文撰寫
+17. Please must write the description part in Traditional Chinese

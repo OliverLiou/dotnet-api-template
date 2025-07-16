@@ -4,7 +4,9 @@
       "Bash(git checkout:*)",
       "Bash(rm:*)",
       "Bash(ls:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(find:*)",
+      "Bash(dotnet build)"
     ],
     "deny": []
   }

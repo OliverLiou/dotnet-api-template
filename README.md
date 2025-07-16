@@ -1,3 +1,5 @@
+# DotNetApiTemplate
+
 此專案為基於 ASP.NET Core 的後端 API，採用 .NET 8.0 框架，專注於高效能與可擴展性。技術重點包括：
 
 1. **身份驗證與授權**：使用 JWT 實現身份驗證，整合 Identity 提供用戶管理功能。

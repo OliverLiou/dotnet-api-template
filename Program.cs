@@ -1,7 +1,7 @@
 using System.Text;
-using TemplateApi.Models;
+using  DotNetApiTemplate.Models;
 using JwtAuthDemo.Helpers;
-using TemplateApi.Services;
+using  DotNetApiTemplate.Services;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -10,7 +10,7 @@ using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var templateContext = "_TemplateContext";
+var templateContext = "_TemplateDBContext";
 var connectionStr = builder.Configuration.GetConnectionString(templateContext);
 
 builder.Services.AddIdentity<User, Role>().AddEntityFrameworkStores<TemplateContext>();
@@ -26,7 +26,7 @@ builder.Services.AddSwaggerGen(c =>
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     c.IncludeXmlComments(xmlPath);
     c.EnableAnnotations();
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "TemplateApi", Version = "v1" });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "DotNetApiTemplate", Version = "v1" });
     // add JWT Authentication
     var securityScheme = new OpenApiSecurityScheme
     {

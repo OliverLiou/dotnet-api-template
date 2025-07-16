@@ -1,4 +1,4 @@
-namespace TemplateApi.Models;
+namespace DotNetApiTemplate.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
