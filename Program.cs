@@ -1,23 +1,19 @@
 using System.Text;
-using TemplateApi.Models;
+using  DotNetApiTemplate.Models;
 using JwtAuthDemo.Helpers;
-using TemplateApi.Services;
+using  DotNetApiTemplate.Services;
 using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var templateContext = "_TemplateContext";
+var templateContext = "_TemplateDBContext";
 var connectionStr = builder.Configuration.GetConnectionString(templateContext);
 
 builder.Services.AddIdentity<User, Role>().AddEntityFrameworkStores<TemplateContext>();
-
-// Add services to the container.
-builder.Services.AddControllers()
-                .AddNewtonsoftJson(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore)
-                .AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
 
 builder.Services.AddDbContext<TemplateContext>(opt => opt.UseSqlServer(connectionStr));
 
@@ -25,7 +21,12 @@ builder.Services.AddDbContext<TemplateContext>(opt => opt.UseSqlServer(connectio
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "TemplateApi", Version = "v1" });
+    // 包含 XML 註解
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+    c.EnableAnnotations();
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "DotNetApiTemplate", Version = "v1" });
     // add JWT Authentication
     var securityScheme = new OpenApiSecurityScheme
     {
@@ -47,6 +48,11 @@ builder.Services.AddSwaggerGen(c =>
         {securityScheme, new string[] { }}
         });
 });
+
+// Add services to the container.
+builder.Services.AddControllers()
+                .AddNewtonsoftJson(options => options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore)
+                .AddJsonOptions(options => options.JsonSerializerOptions.PropertyNamingPolicy = null);
 
 // 註冊泛型 Repository 服務
 builder.Services.AddScoped(typeof(IRepositoryService<,>), typeof(RepositoryService<,>));

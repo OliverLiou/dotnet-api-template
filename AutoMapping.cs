@@ -1,8 +1,8 @@
 using AutoMapper;
-using TemplateApi.Models;
-// using TemplateApi.ViewModels;
+using  DotNetApiTemplate.Models;
+// using  DotNetApiTemplate.ViewModels;
 
-namespace TemplateApi
+namespace DotNetApiTemplate
 {
     public class AutoMapping : Profile
     {

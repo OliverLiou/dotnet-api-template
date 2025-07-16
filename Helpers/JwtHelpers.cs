@@ -6,7 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.Identity;
-using TemplateApi.Models;
+using  DotNetApiTemplate.Models;
 using System.Threading.Tasks;
 
 namespace JwtAuthDemo.Helpers

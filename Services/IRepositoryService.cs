@@ -6,11 +6,11 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
-using Quickly_PriceQuotationApi;
-using TemplateApi.Interface;
-using TemplateApi.Models;
+using  DotNetApiTemplate;
+using  DotNetApiTemplate.Interface;
+using  DotNetApiTemplate.Models;
 
-namespace TemplateApi.Services
+namespace DotNetApiTemplate.Services
 {
     /// <summary>
     /// 泛型 Repository 介面，約束提升到介面級別
@@ -80,8 +80,6 @@ namespace TemplateApi.Services
         {
             try
             {
-                var _transaction = await _context.Database.BeginTransactionAsync();
-
                 var id = GetPrimaryKeyValues(entity);
                 var oldEntity = await GetDataWithIdAsync(id!);
                 var methodName = _create;
@@ -102,7 +100,6 @@ namespace TemplateApi.Services
                 await ContextCreateLog(entity, log);
 
                 await _context.SaveChangesAsync();
-                await _transaction.CommitAsync();
             }
             catch (Exception)
             {
@@ -114,8 +111,6 @@ namespace TemplateApi.Services
         {
             try
             {
-                var _transaction = await _context.Database.BeginTransactionAsync();
-
                 var log = new Log() { EditorName = editorName, Method = "", ExcuteTime = DateTime.Now };
 
                 foreach (var entity in entitys)
@@ -140,7 +135,6 @@ namespace TemplateApi.Services
                 }
 
                 await _context.SaveChangesAsync();
-                await _transaction.CommitAsync();
             }
             catch (Exception)
             {
@@ -152,8 +146,6 @@ namespace TemplateApi.Services
         {
             try
             {
-                var _transaction = await _context.Database.BeginTransactionAsync();
-
                 var entity = await GetDataWithIdAsync(id);
 
                 if (entity == null)
@@ -166,7 +158,6 @@ namespace TemplateApi.Services
                 await ContextCreateLog(entity, log);
 
                 await _context.SaveChangesAsync();
-                await _transaction.CommitAsync();
             }
             catch (Exception)
             {

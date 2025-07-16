@@ -2,9 +2,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations.Schema;
-using TemplateApi.Interface;
+using  DotNetApiTemplate.Interface;
 
-namespace TemplateApi.Models
+namespace DotNetApiTemplate.Models
 {
     public class UserAttribute : IdentityUser
     {

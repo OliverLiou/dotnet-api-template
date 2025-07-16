@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Swashbuckle.AspNetCore.Annotations;
 
-namespace TemplateApi.Controllers;
+namespace DotNetApiTemplate.Controllers;
 
 [ApiController]
 [Route("[controller]")]
@@ -19,6 +20,7 @@ public class WeatherForecastController : ControllerBase
     }
 
     [HttpGet(Name = "GetWeatherForecast")]
+    [SwaggerOperation(Summary = "取得天氣預報", Description = "此 API 用於取得未來五天的天氣預報")]
     public IEnumerable<WeatherForecast> Get()
     {
         return Enumerable.Range(1, 5).Select(index => new WeatherForecast

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace TemplateApi.ViewModels
+namespace DotNetApiTemplate.ViewModels
 {
     public class VUser
     {

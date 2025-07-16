@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Threading.Tasks;
-using TemplateApi.Interface;
+using  DotNetApiTemplate.Interface;
 
-namespace TemplateApi.Models
+namespace DotNetApiTemplate.Models
 {
     public class Table1Attribute
     {

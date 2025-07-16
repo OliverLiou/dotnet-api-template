@@ -12,7 +12,7 @@ using System.Reflection;
 using System.Globalization;
 using System.Linq.Dynamic.Core;
 
-namespace Quickly_PriceQuotationApi
+namespace DotNetApiTemplate
 {
     public class PublicMethod
     {
